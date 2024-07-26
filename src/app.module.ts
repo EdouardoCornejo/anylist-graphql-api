@@ -6,6 +6,7 @@ import { join } from 'path';
 import { ItemsModule } from './core/items/items.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { UsersModule } from 'src/core/users/users.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
       plugins: [ApolloServerPluginLandingPageLocalDefault()],
     }),
     ItemsModule,
+    UsersModule,
   ],
   controllers: [],
   providers: [],
