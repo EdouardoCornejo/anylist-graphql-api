@@ -69,4 +69,15 @@ export class UsersService {
     this.logger.error(error);
     throw new InternalServerErrorException('Please contact the administrator');
   }
+
+  async findOneById(id: string): Promise<User> {
+    try {
+      return await this.usersRepository.findOneByOrFail({ id });
+    } catch (error) {
+      this.handleDbError({
+        code: 'error-001',
+        detail: `${id} not found`,
+      });
+    }
+  }
 }
