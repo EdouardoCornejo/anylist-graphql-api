@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { ApolloDriver } from '@nestjs/apollo';
 import { Module } from '@nestjs/common';
 import { GraphQLModule } from '@nestjs/graphql';
@@ -8,6 +9,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UsersModule } from 'src/core/users/users.module';
 import { AuthModule } from 'src/core/auth/auth.module';
+import { JwtService } from '@nestjs/jwt';
 
 @Module({
   imports: [
@@ -28,13 +30,31 @@ import { AuthModule } from 'src/core/auth/auth.module';
         synchronize: true,
       }),
     }),
-    GraphQLModule.forRoot({
+    GraphQLModule.forRootAsync({
       driver: ApolloDriver,
-      // playground: false,
-      autoSchemaFile: join(process.cwd(), 'src/schema.gql'),
-      playground: false,
-      plugins: [ApolloServerPluginLandingPageLocalDefault()],
+      imports: [AuthModule],
+      inject: [JwtService],
+      useFactory: async (jwtService: JwtService) => ({
+        playground: false,
+        autoSchemaFile: join(process.cwd(), 'src/schema.gql'),
+        plugins: [ApolloServerPluginLandingPageLocalDefault()],
+        context({ req }) {
+          // const token = req.headers.authorization?.replace('Bearer ', '') || '';
+          // if (!token) throw new Error('No token found');
+          // const payload = jwtService.decode(token);
+          // if (!payload) throw new Error('Token not valid');
+        },
+      }),
     }),
+
+    //?Basic configuration
+    // GraphQLModule.forRoot({
+    //   driver: ApolloDriver,
+    //   // playground: false,
+    //   autoSchemaFile: join(process.cwd(), 'src/schema.gql'),
+    //   playground: false,
+    //   plugins: [ApolloServerPluginLandingPageLocalDefault()],
+    // }),
     ItemsModule,
     UsersModule,
     AuthModule,
