@@ -10,6 +10,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { UsersModule } from 'src/core/users/users.module';
 import { AuthModule } from 'src/core/auth/auth.module';
 import { JwtService } from '@nestjs/jwt';
+import { SeedModule } from './core/seed/seed.module';
 
 @Module({
   imports: [
@@ -58,6 +59,7 @@ import { JwtService } from '@nestjs/jwt';
     ItemsModule,
     UsersModule,
     AuthModule,
+    SeedModule,
   ],
   controllers: [],
   providers: [],
