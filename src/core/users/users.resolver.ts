@@ -17,6 +17,8 @@ import { CurrentUser } from 'src/core/auth/decorators/current-user.decorator';
 import { ValidRoles } from 'src/core/auth/enums/valid-roles.enum';
 import { UpdateUserInput } from 'src/core/users/dto/inputs/update-user.input';
 import { ItemsService } from 'src/core/items/items.service';
+import { Item } from 'src/core/items/entities/item.entity';
+import { PaginationArgs, SearchArgs } from 'src/common/dto/args';
 
 @Resolver(() => User)
 @UseGuards(JwtAuthGuard)
@@ -29,10 +31,16 @@ export class UsersResolver {
   @Query(() => [User], { name: 'findAllUsers' })
   findAll(
     @Args() validRoles: ValidRolesArgs,
+    @Args() paginationArgs: PaginationArgs,
+    @Args() searchArgs: SearchArgs,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     @CurrentUser([ValidRoles.ADMIN]) user: User,
   ): Promise<Array<User>> {
-    return this.usersService.findAll(validRoles.roles);
+    return this.usersService.findAll(
+      validRoles.roles,
+      paginationArgs,
+      searchArgs,
+    );
   }
 
   @Query(() => User, { name: 'findOneUser' })
@@ -66,5 +74,15 @@ export class UsersResolver {
     @Parent() user: User,
   ): Promise<number> {
     return this.itemService.itemCountByUser(user);
+  }
+
+  @ResolveField(() => [Item], { name: 'items' })
+  async getItemsByUser(
+    @CurrentUser([ValidRoles.ADMIN]) adminUser: User,
+    @Parent() user: User,
+    @Args() paginationArgs: PaginationArgs,
+    @Args() searchArgs: SearchArgs,
+  ): Promise<Array<Item>> {
+    return this.itemService.findAll(user, paginationArgs, searchArgs);
   }
 }

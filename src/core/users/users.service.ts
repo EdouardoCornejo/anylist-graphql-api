@@ -11,6 +11,7 @@ import { User } from 'src/core/users/entities/user.entity';
 import { Repository } from 'typeorm';
 import { ValidRoles } from 'src/core/auth/enums/valid-roles.enum';
 import { UpdateUserInput } from 'src/core/users/dto/inputs/update-user.input';
+import { PaginationArgs, SearchArgs } from 'src/common/dto/args';
 
 @Injectable()
 export class UsersService {
@@ -34,19 +35,47 @@ export class UsersService {
     }
   }
 
-  findAll(roles: ValidRoles[]): Promise<Array<User>> {
-    if (!roles.length) return this.usersRepository.find();
+  findAll(
+    roles: ValidRoles[],
+    paginationArgs: PaginationArgs,
+    searchArgs: SearchArgs,
+  ): Promise<Array<User>> {
+    const { limit, offset } = paginationArgs;
+    const { search } = searchArgs;
 
-    return this.usersRepository
+    if (!roles.length) {
+      const queryBuilder = this.usersRepository
+        .createQueryBuilder()
+        .take(limit)
+        .skip(offset);
+
+      if (search) {
+        queryBuilder.andWhere('LOWER("fullName") like :fullname', {
+          fullname: `%${search.toLowerCase()}%`,
+        });
+      }
+
+      return queryBuilder.getMany();
+    }
+
+    const queryBuilder = this.usersRepository
       .createQueryBuilder()
-      .andWhere('ARRAY[roles] && ARRAY[:...roles]')
-      .setParameter('roles', roles)
-      .getMany();
+      .take(limit)
+      .skip(offset)
+      .where('ARRAY[roles] && ARRAY[:...roles]')
+      .setParameter('roles', roles);
+
+    if (search) {
+      queryBuilder.andWhere('LOWER(fullName) like :name', {
+        name: `%${search.toLowerCase()}%`,
+      });
+    }
+
+    return queryBuilder.getMany();
   }
 
   findOne(id: string): Promise<User> {
-    console.log('🚀 ~ UsersService ~ findOne ~ id:', id);
-    throw new Error('Method not implemented.');
+    return this.usersRepository.findOneBy({ id: id });
   }
 
   async findOneByEmail(email: string): Promise<User> {
