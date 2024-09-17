@@ -1,18 +1,31 @@
-import { Resolver, Query, Mutation, Args, ID } from '@nestjs/graphql';
-import { ListsService } from './lists.service';
-import { List } from './entities/list.entity';
+import { ParseUUIDPipe, UseGuards } from '@nestjs/common';
+import {
+  Args,
+  ID,
+  Mutation,
+  Parent,
+  Query,
+  ResolveField,
+  Resolver,
+} from '@nestjs/graphql';
+import { PaginationArgs, SearchArgs } from 'src/common/dto/args';
+import { CurrentUser } from 'src/core/auth/decorators/current-user.decorator';
+import { JwtAuthGuard } from 'src/core/auth/guards/jwt-auth.guard';
+import { ListItem } from 'src/core/list-item/entities/list-item.entity';
+import { ListItemService } from 'src/core/list-item/list-item.service';
+import { User } from 'src/core/users/entities/user.entity';
 import { CreateListInput } from './dto/create-list.input';
 import { UpdateListInput } from './dto/update-list.input';
-import { CurrentUser } from 'src/core/auth/decorators/current-user.decorator';
-import { User } from 'src/core/users/entities/user.entity';
-import { PaginationArgs, SearchArgs } from 'src/common/dto/args';
-import { ParseUUIDPipe, UseGuards } from '@nestjs/common';
-import { JwtAuthGuard } from 'src/core/auth/guards/jwt-auth.guard';
+import { List } from './entities/list.entity';
+import { ListsService } from './lists.service';
 
 @Resolver(() => List)
 @UseGuards(JwtAuthGuard)
 export class ListsResolver {
-  constructor(private readonly listsService: ListsService) {}
+  constructor(
+    private readonly listsService: ListsService,
+    private readonly listItemService: ListItemService,
+  ) {}
 
   @Mutation(() => List)
   async createList(
@@ -53,5 +66,19 @@ export class ListsResolver {
     @CurrentUser() user: User,
   ) {
     return this.listsService.remove(id, user);
+  }
+
+  @ResolveField(() => [ListItem], { name: 'items' })
+  async getListItems(
+    @Parent() list: List,
+    @Args() paginationArgs: PaginationArgs,
+    @Args() searchArgs: SearchArgs,
+  ): Promise<ListItem[]> {
+    return this.listItemService.findAll(list, paginationArgs, searchArgs);
+  }
+
+  @ResolveField(() => Number, { name: 'totalItems' })
+  async countListItemsByList(@Parent() list: List): Promise<number> {
+    return this.listItemService.countListItemsByList(list);
   }
 }

@@ -1,17 +1,18 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { ApolloDriver } from '@nestjs/apollo';
 import { Module } from '@nestjs/common';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { GraphQLModule } from '@nestjs/graphql';
+import { JwtService } from '@nestjs/jwt';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { ApolloServerPluginLandingPageLocalDefault } from 'apollo-server-core';
 import { join } from 'path';
-import { ItemsModule } from './core/items/items.module';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { UsersModule } from 'src/core/users/users.module';
 import { AuthModule } from 'src/core/auth/auth.module';
-import { JwtService } from '@nestjs/jwt';
-import { SeedModule } from './core/seed/seed.module';
+import { UsersModule } from 'src/core/users/users.module';
+import { ItemsModule } from './core/items/items.module';
+import { ListItemModule } from './core/list-item/list-item.module';
 import { ListsModule } from './core/lists/lists.module';
+import { SeedModule } from './core/seed/seed.module';
 
 @Module({
   imports: [
@@ -49,7 +50,7 @@ import { ListsModule } from './core/lists/lists.module';
       }),
     }),
 
-    //?Basic configuration
+    //*Basic configuration
     // GraphQLModule.forRoot({
     //   driver: ApolloDriver,
     //   // playground: false,
@@ -62,6 +63,7 @@ import { ListsModule } from './core/lists/lists.module';
     AuthModule,
     SeedModule,
     ListsModule,
+    ListItemModule,
   ],
   controllers: [],
   providers: [],
