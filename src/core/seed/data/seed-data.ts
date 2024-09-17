@@ -539,3 +539,9 @@ export const SEED_ITEMS = [
     category: 'other',
   },
 ];
+
+export const SEED_LISTS = [
+  { name: 'SuperMercado' },
+  { name: 'Compras del Diario' },
+  { name: 'Fin de semana' },
+];
