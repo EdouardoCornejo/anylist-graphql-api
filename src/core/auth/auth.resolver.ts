@@ -6,7 +6,6 @@ import { UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from 'src/core/auth/guards/jwt-auth.guard';
 import { CurrentUser } from 'src/core/auth/decorators/current-user.decorator';
 import { User } from 'src/core/users/entities/user.entity';
-import { ValidRoles } from 'src/core/auth/enums/valid-roles.enum';
 
 @Resolver(() => AuthResponse)
 export class AuthResolver {
@@ -24,7 +23,7 @@ export class AuthResolver {
 
   @Query(() => AuthResponse, { name: 'revalidateToken' })
   @UseGuards(JwtAuthGuard)
-  revalidateToken(@CurrentUser([ValidRoles.ADMIN]) user: User): AuthResponse {
+  revalidateToken(@CurrentUser() user: User): AuthResponse {
     return this.authService.revalidateToken(user);
   }
 }

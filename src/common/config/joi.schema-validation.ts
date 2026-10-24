@@ -5,6 +5,7 @@ import * as Joi from 'joi';
  * that are used to connect to the database.
  */
 export const JoiValidationSchema = Joi.object({
+  STATE: Joi.string().default('dev'),
   DB_PASSWORD: Joi.string().required(),
   DB_NAME: Joi.string().required(),
   DB_HOST: Joi.string().default('localhost'),

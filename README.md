@@ -93,7 +93,7 @@ JWT_SECRET=<tu_secreto>
 JWT_EXPIRATION_TIME=1h
 ```
 
-> `src/app.module.ts` lee el usuario de la base de datos desde **`DB_USER_NAME`** y el host desde **`DB_HOST`**. La plantilla `.env.example` usa `DB_USERNAME` y no incluye `DB_HOST`, así que añádelas con el nombre que espera el código.
+> Al arrancar, `ConfigModule` valida el entorno con el esquema Joi de `src/common/config/joi.schema-validation.ts`: `DB_PASSWORD`, `DB_NAME` y `JWT_SECRET` son obligatorias (la app no arranca si faltan) y el resto toma su valor por defecto (`STATE=dev`, `DB_HOST=localhost`, `DB_PORT=5432`, `DB_USER_NAME=postgres`, `JWT_EXPIRATION_TIME=4h`).
 
 ### Base de datos con Docker
 
@@ -127,18 +127,18 @@ Borra todas las tablas y crea los usuarios, items y listas definidos en `src/cor
 
 ### Scripts disponibles
 
-| Script                | Descripción                                |
-| --------------------- | ------------------------------------------ |
-| `npm run start`       | Arranca la aplicación                      |
-| `npm run start:dev`   | Modo desarrollo con _watch_                |
-| `npm run start:debug` | Modo depuración con _watch_                |
-| `npm run build`       | Compila a `dist/`                          |
-| `npm run start:prod`  | Ejecuta la build (`node dist/main`)        |
-| `npm run lint`        | ESLint con autocorrección                  |
-| `npm run format`      | Prettier sobre `src/` y `test/`            |
-| `npm run test`        | Tests unitarios (Jest)                     |
-| `npm run test:e2e`    | Tests end-to-end                           |
-| `npm run test:cov`    | Cobertura de tests                         |
+| Script                | Descripción                         |
+| --------------------- | ----------------------------------- |
+| `npm run start`       | Arranca la aplicación               |
+| `npm run start:dev`   | Modo desarrollo con _watch_         |
+| `npm run start:debug` | Modo depuración con _watch_         |
+| `npm run build`       | Compila a `dist/`                   |
+| `npm run start:prod`  | Ejecuta la build (`node dist/main`) |
+| `npm run lint`        | ESLint con autocorrección           |
+| `npm run format`      | Prettier sobre `src/` y `test/`     |
+| `npm run test`        | Tests unitarios (Jest)              |
+| `npm run test:e2e`    | Tests end-to-end                    |
+| `npm run test:cov`    | Cobertura de tests                  |
 
 ---
 
@@ -148,42 +148,43 @@ Todas las operaciones salvo `signUp`, `login` y `executeSeed` requieren la cabec
 
 ### Autenticación
 
-| Operación         | Tipo     | Descripción                                         | Rol requerido |
-| ----------------- | -------- | --------------------------------------------------- | ------------- |
-| `signUp`          | Mutation | Crea un usuario y devuelve `{ token, user }`        | —             |
-| `login`           | Mutation | Valida email/contraseña y devuelve `{ token, user }` | —             |
-| `revalidateToken` | Query    | Emite un token nuevo para el usuario autenticado    | `admin`       |
+| Operación         | Tipo     | Descripción                                          | Rol requerido                 |
+| ----------------- | -------- | ---------------------------------------------------- | ----------------------------- |
+| `signUp`          | Mutation | Crea un usuario y devuelve `{ token, user }`         | —                             |
+| `login`           | Mutation | Valida email/contraseña y devuelve `{ token, user }` | —                             |
+| `revalidateToken` | Query    | Emite un token nuevo para el usuario autenticado     | Cualquier usuario autenticado |
 
 ### Usuarios
 
-| Operación      | Tipo     | Descripción                                               | Rol requerido           |
-| -------------- | -------- | --------------------------------------------------------- | ----------------------- |
-| `findAllUsers` | Query    | Lista usuarios; filtra por `roles`, paginación y búsqueda | `admin`                 |
-| `findOneUser`  | Query    | Obtiene un usuario por `id`                               | `admin` o `super_user`  |
-| `updateUser`   | Mutation | Actualiza datos, roles o `isActive`                       | `admin` o `super_user`  |
-| `blockUser`    | Mutation | Desactiva un usuario                                      | `admin` o `super_user`  |
+| Operación      | Tipo     | Descripción                                               | Rol requerido          |
+| -------------- | -------- | --------------------------------------------------------- | ---------------------- |
+| `findAllUsers` | Query    | Lista usuarios; filtra por `roles`, paginación y búsqueda | `admin`                |
+| `findOneUser`  | Query    | Obtiene un usuario por `id`                               | `admin` o `super_user` |
+| `updateUser`   | Mutation | Actualiza datos, roles o `isActive`                       | `admin` o `super_user` |
+| `blockUser`    | Mutation | Desactiva un usuario                                      | `admin` o `super_user` |
 
 ### Items
 
-| Operación    | Tipo     | Descripción                                      |
-| ------------ | -------- | ------------------------------------------------ |
-| `items`      | Query    | Items del usuario (`offset`, `limit`, `search`)  |
-| `item`       | Query    | Un item del usuario por `id`                     |
-| `createItem` | Mutation | Crea un item (`name`, `quantityUnits`)           |
-| `updateItem` | Mutation | Actualiza un item propio                         |
-| `removeItem` | Mutation | Elimina un item propio                           |
+| Operación    | Tipo     | Descripción                                     |
+| ------------ | -------- | ----------------------------------------------- |
+| `items`      | Query    | Items del usuario (`offset`, `limit`, `search`) |
+| `item`       | Query    | Un item del usuario por `id`                    |
+| `createItem` | Mutation | Crea un item (`name`, `quantityUnits`)          |
+| `updateItem` | Mutation | Actualiza un item propio                        |
+| `removeItem` | Mutation | Elimina un item propio                          |
 
 ### Listas y elementos de lista
 
-| Operación        | Tipo     | Descripción                                                     |
-| ---------------- | -------- | --------------------------------------------------------------- |
-| `lists`          | Query    | Listas del usuario (`offset`, `limit`, `search`)                |
-| `list`           | Query    | Una lista por `id`, con los campos `items` y `totalItems`        |
-| `createList`     | Mutation | Crea una lista                                                  |
-| `updateList`     | Mutation | Renombra una lista                                              |
-| `removeList`     | Mutation | Elimina una lista                                               |
-| `listItem`       | Query    | Un elemento de lista por `id`                                   |
-| `createListItem` | Mutation | Añade un item a una lista (`listId`, `itemId`, `quantity`, `completed`) |
+| Operación        | Tipo     | Descripción                                                                                                             |
+| ---------------- | -------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `lists`          | Query    | Listas del usuario (`offset`, `limit`, `search`)                                                                        |
+| `list`           | Query    | Una lista por `id`, con los campos `items` y `totalItems`                                                               |
+| `createList`     | Mutation | Crea una lista                                                                                                          |
+| `updateList`     | Mutation | Renombra una lista                                                                                                      |
+| `removeList`     | Mutation | Elimina una lista                                                                                                       |
+| `listItem`       | Query    | Un elemento de lista por `id`                                                                                           |
+| `createListItem` | Mutation | Añade un item a una lista (`listId`, `itemId`, `quantity`, `completed`)                                                 |
+| `updateListItem` | Mutation | Actualiza un elemento de lista por `id`; solo cambian los campos enviados (`quantity`, `completed`, `listId`, `itemId`) |
 
 ### Ejemplo
 
@@ -234,7 +235,7 @@ La aplicación se compone en `src/app.module.ts`, que configura `TypeOrmModule` 
 
 - Entidad `List`: `name` y relación con `User`; entidad `ListItem` (tabla `listItems`): `quantity`, `completed` y relaciones con `List` e `Item`.
 - `ListsResolver` resuelve `items` (paginado y con búsqueda por nombre del item mediante `innerJoin`) y `totalItems` a través de `ListItemService`.
-- `ListItemService.create` recibe `listId` e `itemId` y crea la relación; `update` usa un `UpdateQueryBuilder`, aunque su resolver todavía no está expuesto como mutation.
+- `ListItemService.create` recibe `listId` e `itemId` y crea la relación; `update` usa un `UpdateQueryBuilder` con un único `set()` que solo incluye los campos enviados (`UpdateListItemInput` no hereda los valores por defecto de `CreateListItemInput`) y se expone como la mutation `updateListItem`.
 
 ### 5. `seed`
 
@@ -313,18 +314,18 @@ anylist-graphql-api/
 
 Variables de entorno leídas por la aplicación:
 
-| Variable              | Significado                                          | Ejemplo / por defecto |
-| --------------------- | ---------------------------------------------------- | --------------------- |
-| `STATE`               | Entorno; con `prod` se bloquea el seed               | `dev`                 |
-| `DB_HOST`             | Host de PostgreSQL                                   | `localhost`           |
-| `DB_PORT`             | Puerto de PostgreSQL                                 | `5432`                |
+| Variable              | Significado                                           | Ejemplo / por defecto |
+| --------------------- | ----------------------------------------------------- | --------------------- |
+| `STATE`               | Entorno; con `prod` se bloquea el seed                | `dev`                 |
+| `DB_HOST`             | Host de PostgreSQL                                    | `localhost`           |
+| `DB_PORT`             | Puerto de PostgreSQL                                  | `5432`                |
 | `DB_NAME`             | Nombre de la base de datos (también usado por Docker) | `AnyListDB`           |
-| `DB_USER_NAME`        | Usuario de PostgreSQL                                | `postgres`            |
-| `DB_PASSWORD`         | Contraseña de PostgreSQL (también usada por Docker)  | —                     |
-| `JWT_SECRET`          | Secreto para firmar y verificar los tokens           | —                     |
-| `JWT_EXPIRATION_TIME` | Caducidad del token                                  | `1h`                  |
+| `DB_USER_NAME`        | Usuario de PostgreSQL                                 | `postgres`            |
+| `DB_PASSWORD`         | Contraseña de PostgreSQL (también usada por Docker)   | —                     |
+| `JWT_SECRET`          | Secreto para firmar y verificar los tokens            | —                     |
+| `JWT_EXPIRATION_TIME` | Caducidad del token                                   | `1h` / `4h`           |
 
-> El puerto `4000` está fijado en `src/main.ts`. Existe un esquema Joi (`src/common/config/joi.schema-validation.ts`) con valores por defecto, pero no está conectado a `ConfigModule`.
+> El puerto `4000` está fijado en `src/main.ts`. `ConfigModule.forRoot` valida estas variables con `JoiValidationSchema` (`src/common/config/joi.schema-validation.ts`), que aplica los valores por defecto, y carga además `EnvConfig` (`src/common/config/env.config.ts`).
 
 ---
 

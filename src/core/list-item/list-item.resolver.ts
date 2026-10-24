@@ -24,7 +24,9 @@ export class ListItemResolver {
   ): Promise<ListItem> {
     return this.listItemService.findOne(id);
   }
-  async updateListItem(
+
+  @Mutation(() => ListItem)
+  updateListItem(
     @Args('updateListItemInput') updateListItemInput: UpdateListItemInput,
   ): Promise<ListItem> {
     return this.listItemService.update(

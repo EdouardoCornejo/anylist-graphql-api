@@ -75,16 +75,17 @@ export class ListItemService {
   ): Promise<ListItem> {
     const { listId, itemId, ...rest } = updateListItemInput;
 
-    const queryBuilder = this.listItemsRepository
+    // A single set() call: each set() replaces the previous values.
+    await this.listItemsRepository
       .createQueryBuilder()
       .update()
-      .set(rest)
-      .where('id = :id', { id });
-
-    if (listId) queryBuilder.set({ list: { id: listId } });
-    if (itemId) queryBuilder.set({ item: { id: itemId } });
-
-    await queryBuilder.execute();
+      .set({
+        ...rest,
+        ...(listId && { list: { id: listId } }),
+        ...(itemId && { item: { id: itemId } }),
+      })
+      .where('id = :id', { id })
+      .execute();
 
     return this.findOne(id);
   }

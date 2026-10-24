@@ -7,6 +7,8 @@ import { JwtService } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ApolloServerPluginLandingPageLocalDefault } from 'apollo-server-core';
 import { join } from 'path';
+import { EnvConfig } from 'src/common/config/env.config';
+import { JoiValidationSchema } from 'src/common/config/joi.schema-validation';
 import { AuthModule } from 'src/core/auth/auth.module';
 import { UsersModule } from 'src/core/users/users.module';
 import { ItemsModule } from './core/items/items.module';
@@ -18,6 +20,8 @@ import { SeedModule } from './core/seed/seed.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+      load: [EnvConfig],
+      validationSchema: JoiValidationSchema,
     }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
