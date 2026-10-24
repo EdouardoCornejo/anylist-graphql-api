@@ -6,4 +6,7 @@ export enum ValidRoles {
   SUPER_USER = 'super_user',
 }
 
-registerEnumType(ValidRoles, { name: 'ValidRoles' });
+registerEnumType(ValidRoles, {
+  name: 'ValidRoles',
+  description: 'Roles a user can have.',
+});

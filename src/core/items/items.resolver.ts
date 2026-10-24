@@ -13,7 +13,10 @@ import { PaginationArgs, SearchArgs } from 'src/common/dto/args';
 export class ItemsResolver {
   constructor(private readonly itemsService: ItemsService) {}
 
-  @Mutation(() => Item, { name: 'createItem' })
+  @Mutation(() => Item, {
+    name: 'createItem',
+    description: "Create an item in the authenticated user's catalog.",
+  })
   createItem(
     @Args('createItemInput') createItemInput: CreateItemInput,
     @CurrentUser() user: User,
@@ -21,7 +24,11 @@ export class ItemsResolver {
     return this.itemsService.create(createItemInput, user);
   }
 
-  @Query(() => [Item], { name: 'items' })
+  @Query(() => [Item], {
+    name: 'items',
+    description:
+      "List the authenticated user's items, paginated and searchable by name.",
+  })
   findAll(
     @CurrentUser() user: User,
     @Args() paginationArgs: PaginationArgs,
@@ -30,7 +37,10 @@ export class ItemsResolver {
     return this.itemsService.findAll(user, paginationArgs, searchArgs);
   }
 
-  @Query(() => Item, { name: 'item' })
+  @Query(() => Item, {
+    name: 'item',
+    description: "Get one of the authenticated user's items by id.",
+  })
   findOne(
     @Args('id', { type: () => ID }, ParseUUIDPipe) id: string,
     @CurrentUser() user: User,
@@ -38,7 +48,9 @@ export class ItemsResolver {
     return this.itemsService.findOne(id, user);
   }
 
-  @Mutation(() => Item)
+  @Mutation(() => Item, {
+    description: "Update one of the authenticated user's items.",
+  })
   updateItem(
     @Args('updateItemInput') updateItemInput: UpdateItemInput,
     @CurrentUser() user: User,
@@ -46,7 +58,9 @@ export class ItemsResolver {
     return this.itemsService.update(updateItemInput.id, updateItemInput, user);
   }
 
-  @Mutation(() => Item)
+  @Mutation(() => Item, {
+    description: "Delete one of the authenticated user's items.",
+  })
   removeItem(
     @Args('id', { type: () => ID }) id: string,
     @CurrentUser() user: User,

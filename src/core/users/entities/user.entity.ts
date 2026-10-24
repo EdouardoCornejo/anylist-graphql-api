@@ -11,18 +11,18 @@ import {
 } from 'typeorm';
 
 @Entity()
-@ObjectType()
+@ObjectType({ description: 'An application user.' })
 export class User {
   @PrimaryGeneratedColumn('uuid')
-  @Field(() => ID)
+  @Field(() => ID, { description: 'Unique identifier (UUID).' })
   id: string;
 
   @Column()
-  @Field(() => String)
+  @Field(() => String, { description: 'Full name.' })
   fullName: string;
 
   @Column({ unique: true })
-  @Field(() => String)
+  @Field(() => String, { description: 'Unique email used to log in.' })
   email: string;
 
   @Column()
@@ -33,14 +33,18 @@ export class User {
     array: true,
     default: ['user'],
   })
-  @Field(() => [String])
+  @Field(() => [String], {
+    description: 'Roles granted to the user (admin, user, super_user).',
+  })
   roles: string[];
 
   @Column({
     type: 'boolean',
     default: true,
   })
-  @Field(() => Boolean)
+  @Field(() => Boolean, {
+    description: 'Whether the user can log in; false once blocked.',
+  })
   isActive: boolean;
 
   @ManyToOne(() => User, (user) => user.lastUpdateBy, {
@@ -48,7 +52,10 @@ export class User {
     lazy: true,
   })
   @JoinColumn({ name: 'lastUpdateBy' })
-  @Field(() => User, { nullable: true })
+  @Field(() => User, {
+    nullable: true,
+    description: 'Last user who modified this user.',
+  })
   lastUpdateBy?: User;
 
   @OneToMany(() => Item, (item) => item.user, { lazy: true })

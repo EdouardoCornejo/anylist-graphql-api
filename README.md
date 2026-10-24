@@ -57,7 +57,7 @@ API **GraphQL** para gestionar **listas de compras** construida con **NestJS**, 
 - **Paginación** (`offset`, `limit`) y **búsqueda** (`search`, sin distinguir mayúsculas) reutilizables en todas las consultas de colección.
 - **Gestión de usuarios** para administradores: listar filtrando por roles, consultar, actualizar y bloquear (`isActive = false`), registrando quién hizo el último cambio (`lastUpdateBy`).
 - **Seed** que borra y repuebla la base de datos con usuarios, items y una lista de ejemplo (bloqueado cuando `STATE=prod`).
-- **Esquema generado automáticamente** (_code-first_) en `src/schema.gql` y **Apollo Sandbox** como interfaz para explorar la API.
+- **Esquema autodocumentado y generado automáticamente** (_code-first_) en `src/schema.gql`: cada tipo, campo, argumento y operación lleva su `description`, visible en **Apollo Sandbox** (servido solo fuera de producción).
 
 ---
 
@@ -111,7 +111,7 @@ TypeORM está configurado con `synchronize: true`, por lo que las tablas se crea
 npm run start:dev
 ```
 
-La API escucha en el puerto **4000**. Abre `http://localhost:4000/graphql` para usar Apollo Sandbox.
+La API escucha en el puerto **4000**. Abre `http://localhost:4000/graphql` para usar Apollo Sandbox, que solo se sirve cuando `STATE` es distinto de `prod`.
 
 ### Poblar la base de datos (seed)
 
@@ -210,7 +210,7 @@ query {
 
 ## Cómo funciona
 
-La aplicación se compone en `src/app.module.ts`, que configura `TypeOrmModule` (PostgreSQL, `autoLoadEntities`, `synchronize`) y `GraphQLModule` con `ApolloDriver` en modo _code-first_ (`autoSchemaFile: src/schema.gql`) y el plugin `ApolloServerPluginLandingPageLocalDefault`. `src/main.ts` usa un `CustomLoggerService`, habilita CORS, registra un `ValidationPipe` global (`whitelist`, `forbidNonWhitelisted`, `transform`) y escucha en el puerto `4000`.
+La aplicación se compone en `src/app.module.ts`, que configura `TypeOrmModule` (PostgreSQL, `autoLoadEntities`, `synchronize`) y `GraphQLModule` con `ApolloDriver` en modo _code-first_ (`autoSchemaFile: src/schema.gql`, regenerado al arrancar con las descripciones de los decoradores) y el plugin `ApolloServerPluginLandingPageLocalDefault` (Apollo Sandbox) cuando `STATE` no es `prod`. `src/main.ts` usa un `CustomLoggerService`, habilita CORS, registra un `ValidationPipe` global (`whitelist`, `forbidNonWhitelisted`, `transform`) y escucha en el puerto `4000`.
 
 ### 1. `auth`
 
@@ -314,16 +314,16 @@ anylist-graphql-api/
 
 Variables de entorno leídas por la aplicación:
 
-| Variable              | Significado                                           | Ejemplo / por defecto |
-| --------------------- | ----------------------------------------------------- | --------------------- |
-| `STATE`               | Entorno; con `prod` se bloquea el seed                | `dev`                 |
-| `DB_HOST`             | Host de PostgreSQL                                    | `localhost`           |
-| `DB_PORT`             | Puerto de PostgreSQL                                  | `5432`                |
-| `DB_NAME`             | Nombre de la base de datos (también usado por Docker) | `AnyListDB`           |
-| `DB_USER_NAME`        | Usuario de PostgreSQL                                 | `postgres`            |
-| `DB_PASSWORD`         | Contraseña de PostgreSQL (también usada por Docker)   | —                     |
-| `JWT_SECRET`          | Secreto para firmar y verificar los tokens            | —                     |
-| `JWT_EXPIRATION_TIME` | Caducidad del token                                   | `1h` / `4h`           |
+| Variable              | Significado                                                         | Ejemplo / por defecto |
+| --------------------- | ------------------------------------------------------------------- | --------------------- |
+| `STATE`               | Entorno; con `prod` se bloquea el seed y no se sirve Apollo Sandbox | `dev`                 |
+| `DB_HOST`             | Host de PostgreSQL                                                  | `localhost`           |
+| `DB_PORT`             | Puerto de PostgreSQL                                                | `5432`                |
+| `DB_NAME`             | Nombre de la base de datos (también usado por Docker)               | `AnyListDB`           |
+| `DB_USER_NAME`        | Usuario de PostgreSQL                                               | `postgres`            |
+| `DB_PASSWORD`         | Contraseña de PostgreSQL (también usada por Docker)                 | —                     |
+| `JWT_SECRET`          | Secreto para firmar y verificar los tokens                          | —                     |
+| `JWT_EXPIRATION_TIME` | Caducidad del token                                                 | `1h` / `4h`           |
 
 > El puerto `4000` está fijado en `src/main.ts`. `ConfigModule.forRoot` valida estas variables con `JoiValidationSchema` (`src/common/config/joi.schema-validation.ts`), que aplica los valores por defecto, y carga además `EnvConfig` (`src/common/config/env.config.ts`).
 

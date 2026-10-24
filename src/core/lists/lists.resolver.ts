@@ -27,7 +27,9 @@ export class ListsResolver {
     private readonly listItemService: ListItemService,
   ) {}
 
-  @Mutation(() => List)
+  @Mutation(() => List, {
+    description: 'Create a list for the authenticated user.',
+  })
   async createList(
     @Args('createListInput') createListInput: CreateListInput,
     @CurrentUser() user: User,
@@ -35,7 +37,11 @@ export class ListsResolver {
     return this.listsService.create(createListInput, user);
   }
 
-  @Query(() => [List], { name: 'lists' })
+  @Query(() => [List], {
+    name: 'lists',
+    description:
+      "List the authenticated user's lists, paginated and searchable by name.",
+  })
   async findAll(
     @CurrentUser() user: User,
     @Args() paginationArgs: PaginationArgs,
@@ -44,7 +50,10 @@ export class ListsResolver {
     return this.listsService.findAll(user, paginationArgs, searchArgs);
   }
 
-  @Query(() => List, { name: 'list' })
+  @Query(() => List, {
+    name: 'list',
+    description: "Get one of the authenticated user's lists by id.",
+  })
   findOne(
     @Args('id', { type: () => ID }, ParseUUIDPipe) id: string,
     @CurrentUser() user: User,
@@ -52,7 +61,9 @@ export class ListsResolver {
     return this.listsService.findOne(id, user);
   }
 
-  @Mutation(() => List)
+  @Mutation(() => List, {
+    description: "Rename one of the authenticated user's lists.",
+  })
   updateList(
     @Args('updateListInput') updateListInput: UpdateListInput,
     @CurrentUser() user: User,
@@ -60,7 +71,9 @@ export class ListsResolver {
     return this.listsService.update(updateListInput.id, updateListInput, user);
   }
 
-  @Mutation(() => List)
+  @Mutation(() => List, {
+    description: "Delete one of the authenticated user's lists.",
+  })
   removeList(
     @Args('id', { type: () => ID }, ParseUUIDPipe) id: string,
     @CurrentUser() user: User,
@@ -68,7 +81,10 @@ export class ListsResolver {
     return this.listsService.remove(id, user);
   }
 
-  @ResolveField(() => [ListItem], { name: 'items' })
+  @ResolveField(() => [ListItem], {
+    name: 'items',
+    description: 'Entries of the list, paginated and searchable by item name.',
+  })
   async getListItems(
     @Parent() list: List,
     @Args() paginationArgs: PaginationArgs,
@@ -77,7 +93,10 @@ export class ListsResolver {
     return this.listItemService.findAll(list, paginationArgs, searchArgs);
   }
 
-  @ResolveField(() => Number, { name: 'totalItems' })
+  @ResolveField(() => Number, {
+    name: 'totalItems',
+    description: 'Total number of entries in the list.',
+  })
   async countListItemsByList(@Parent() list: List): Promise<number> {
     return this.listItemService.countListItemsByList(list);
   }

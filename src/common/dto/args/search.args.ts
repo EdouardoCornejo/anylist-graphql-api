@@ -3,7 +3,10 @@ import { IsOptional, IsString } from 'class-validator';
 
 @ArgsType()
 export class SearchArgs {
-  @Field(() => String, { nullable: true })
+  @Field(() => String, {
+    nullable: true,
+    description: 'Case-insensitive filter on the name.',
+  })
   @IsString()
   @IsOptional()
   search?: string;

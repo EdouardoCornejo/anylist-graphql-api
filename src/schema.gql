@@ -2,59 +2,186 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
+"""A shopping list owned by a user."""
 type List {
+  """Unique identifier (UUID)."""
   id: ID!
+
+  """List name."""
   name: String!
+
+  """User who owns the list."""
   user: User!
-  items(offset: Int = 0, limit: Int = 10, search: String): [ListItem!]!
+
+  """Entries of the list, paginated and searchable by item name."""
+  items(
+    """Number of records to skip."""
+    offset: Int = 0
+
+    """Maximum number of records to return."""
+    limit: Int = 10
+
+    """Case-insensitive filter on the name."""
+    search: String
+  ): [ListItem!]!
+
+  """Total number of entries in the list."""
   totalItems: Float!
 }
 
+"""An item placed in a list, with its quantity and status."""
 type ListItem {
+  """Unique identifier (UUID)."""
   id: ID!
+
+  """Quantity of the item to buy."""
   quantity: Float!
+
+  """Whether the item has already been picked up."""
   completed: Boolean!
+
+  """List the entry belongs to."""
   list: List!
+
+  """Catalog item of the entry."""
   item: Item!
 }
 
+"""A catalog item owned by a user."""
 type Item {
+  """Unique identifier (UUID)."""
   id: ID!
+
+  """Item name."""
   name: String!
+
+  """Unit the quantity is measured in (e.g. kg, lb, box)."""
   quantityUnits: String
+
+  """User who owns the item."""
   user: User!
+
+  """List entries that reference this item."""
   listItem: [ListItem!]!
 }
 
+"""An application user."""
 type User {
+  """Unique identifier (UUID)."""
   id: ID!
+
+  """Full name."""
   fullName: String!
+
+  """Unique email used to log in."""
   email: String!
+
+  """Roles granted to the user (admin, user, super_user)."""
   roles: [String!]!
+
+  """Whether the user can log in; false once blocked."""
   isActive: Boolean!
+
+  """Last user who modified this user."""
   lastUpdateBy: User
+
+  """Number of items owned by the user (admin only)."""
   itemCount: Int!
-  items(offset: Int = 0, limit: Int = 10, search: String): [Item!]!
+
+  """Items owned by the user, paginated and searchable (admin only)."""
+  items(
+    """Number of records to skip."""
+    offset: Int = 0
+
+    """Maximum number of records to return."""
+    limit: Int = 10
+
+    """Case-insensitive filter on the name."""
+    search: String
+  ): [Item!]!
+
+  """Number of lists owned by the user (admin only)."""
   listCount: Int!
-  list(offset: Int = 0, limit: Int = 10, search: String): [List!]!
+
+  """Lists owned by the user, paginated and searchable (admin only)."""
+  list(
+    """Number of records to skip."""
+    offset: Int = 0
+
+    """Maximum number of records to return."""
+    limit: Int = 10
+
+    """Case-insensitive filter on the name."""
+    search: String
+  ): [List!]!
 }
 
+"""A signed JWT and the authenticated user."""
 type AuthResponse {
+  """JWT to send as the header Authorization: Bearer <token>."""
   token: String!
+
+  """Authenticated user."""
   user: User!
 }
 
 type Query {
+  """Issue a fresh JWT for the authenticated user."""
   revalidateToken: AuthResponse!
-  findAllUsers(roles: [ValidRoles!] = [], offset: Int = 0, limit: Int = 10, search: String): [User!]!
+
+  """List users, optionally filtered by roles (admin only)."""
+  findAllUsers(
+    """Return only users that have any of these roles."""
+    roles: [ValidRoles!] = []
+
+    """Number of records to skip."""
+    offset: Int = 0
+
+    """Maximum number of records to return."""
+    limit: Int = 10
+
+    """Case-insensitive filter on the name."""
+    search: String
+  ): [User!]!
+
+  """Get a user by id (admin or super_user)."""
   findOneUser(id: ID!): User!
-  items(offset: Int = 0, limit: Int = 10, search: String): [Item!]!
+
+  """List the authenticated user's items, paginated and searchable by name."""
+  items(
+    """Number of records to skip."""
+    offset: Int = 0
+
+    """Maximum number of records to return."""
+    limit: Int = 10
+
+    """Case-insensitive filter on the name."""
+    search: String
+  ): [Item!]!
+
+  """Get one of the authenticated user's items by id."""
   item(id: ID!): Item!
-  lists(offset: Int = 0, limit: Int = 10, search: String): [List!]!
+
+  """List the authenticated user's lists, paginated and searchable by name."""
+  lists(
+    """Number of records to skip."""
+    offset: Int = 0
+
+    """Maximum number of records to return."""
+    limit: Int = 10
+
+    """Case-insensitive filter on the name."""
+    search: String
+  ): [List!]!
+
+  """Get one of the authenticated user's lists by id."""
   list(id: ID!): List!
+
+  """Get a list entry by id."""
   listItem(id: String!): ListItem!
 }
 
+"""Roles a user can have."""
 enum ValidRoles {
   ADMIN
   USER
@@ -62,74 +189,153 @@ enum ValidRoles {
 }
 
 type Mutation {
+  """Register a new user and return a JWT."""
   signUp(signUpInput: SignUpInput!): AuthResponse!
+
+  """Log in with email and password and return a JWT."""
   login(loginInput: LoginInput!): AuthResponse!
+
+  """Update a user's data, roles or active state (admin or super_user)."""
   updateUser(updateUserInput: UpdateUserInput!): User!
+
+  """Deactivate a user (admin or super_user)."""
   blockUser(id: ID!): User!
+
+  """Create an item in the authenticated user's catalog."""
   createItem(createItemInput: CreateItemInput!): Item!
+
+  """Update one of the authenticated user's items."""
   updateItem(updateItemInput: UpdateItemInput!): Item!
+
+  """Delete one of the authenticated user's items."""
   removeItem(id: ID!): Item!
+
+  """Create a list for the authenticated user."""
   createList(createListInput: CreateListInput!): List!
+
+  """Rename one of the authenticated user's lists."""
   updateList(updateListInput: UpdateListInput!): List!
+
+  """Delete one of the authenticated user's lists."""
   removeList(id: ID!): List!
+
+  """Add an item to a list."""
   createListItem(createListItemInput: CreateListItemInput!): ListItem!
+
+  """Update a list entry; only the fields sent are changed."""
   updateListItem(updateListItemInput: UpdateListItemInput!): ListItem!
 
-  """Execute seed contruction"""
+  """Wipe the database and load the seed data (disabled when STATE=prod)."""
   executeSeed: Boolean!
 }
 
+"""Data to register a new user."""
 input SignUpInput {
+  """Email address; must be unique."""
   email: String!
+
+  """Full name."""
   fullName: String!
+
+  """Password, at least 6 characters."""
   password: String!
 }
 
+"""Credentials to log in."""
 input LoginInput {
+  """Registered email address."""
   email: String!
+
+  """Password, at least 6 characters."""
   password: String!
 }
 
+"""Fields to update on a user; omitted fields stay unchanged."""
 input UpdateUserInput {
+  """Email address; must be unique."""
   email: String
+
+  """Full name."""
   fullName: String
+
+  """Password, at least 6 characters."""
   password: String
+
+  """Id of the user to update."""
   id: ID!
+
+  """New set of roles."""
   roles: [ValidRoles!]
+
+  """Activate or deactivate the user."""
   isActive: Boolean
 }
 
+"""Data to create an item."""
 input CreateItemInput {
+  """Item name."""
   name: String!
+
+  """Unit the quantity is measured in (e.g. kg, lb, box)."""
   quantityUnits: String
 }
 
+"""Fields to update on an item; omitted fields stay unchanged."""
 input UpdateItemInput {
+  """Item name."""
   name: String
+
+  """Unit the quantity is measured in (e.g. kg, lb, box)."""
   quantityUnits: String
+
+  """Id of the item to update."""
   id: ID!
 }
 
+"""Data to create a list."""
 input CreateListInput {
+  """List name."""
   name: String!
 }
 
+"""Fields to update on a list."""
 input UpdateListInput {
+  """List name."""
   name: String
+
+  """Id of the list to update."""
   id: String!
 }
 
+"""Data to add an item to a list."""
 input CreateListItemInput {
+  """Quantity of the item; defaults to 0."""
   quantity: Float = 0
+
+  """Whether the item is already picked up; defaults to false."""
   completed: Boolean = false
+
+  """Id of the target list."""
   listId: ID!
+
+  """Id of the item to add."""
   itemId: ID!
 }
 
+"""Fields to update on a list entry; omitted fields stay unchanged."""
 input UpdateListItemInput {
+  """New quantity."""
   quantity: Float
+
+  """New completion state."""
   completed: Boolean
+
+  """Move the entry to another list."""
   listId: ID
+
+  """Replace the catalog item of the entry."""
   itemId: ID
+
+  """Id of the list entry to update."""
   id: ID!
 }

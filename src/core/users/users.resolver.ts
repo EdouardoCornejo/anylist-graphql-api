@@ -31,7 +31,10 @@ export class UsersResolver {
     private readonly listsService: ListsService,
   ) {}
 
-  @Query(() => [User], { name: 'findAllUsers' })
+  @Query(() => [User], {
+    name: 'findAllUsers',
+    description: 'List users, optionally filtered by roles (admin only).',
+  })
   findAll(
     @Args() validRoles: ValidRolesArgs,
     @Args() paginationArgs: PaginationArgs,
@@ -46,7 +49,10 @@ export class UsersResolver {
     );
   }
 
-  @Query(() => User, { name: 'findOneUser' })
+  @Query(() => User, {
+    name: 'findOneUser',
+    description: 'Get a user by id (admin or super_user).',
+  })
   findOne(
     @Args('id', { type: () => ID }, ParseUUIDPipe) id: string,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -55,7 +61,11 @@ export class UsersResolver {
     return this.usersService.findOneById(id);
   }
 
-  @Mutation(() => User, { name: 'updateUser' })
+  @Mutation(() => User, {
+    name: 'updateUser',
+    description:
+      "Update a user's data, roles or active state (admin or super_user).",
+  })
   updateUser(
     @Args('updateUserInput') updateUserInput: UpdateUserInput,
     @CurrentUser([ValidRoles.ADMIN, ValidRoles.SUPER_USER]) user: User,
@@ -63,7 +73,9 @@ export class UsersResolver {
     return this.usersService.update(updateUserInput.id, updateUserInput, user);
   }
 
-  @Mutation(() => User)
+  @Mutation(() => User, {
+    description: 'Deactivate a user (admin or super_user).',
+  })
   blockUser(
     @Args('id', { type: () => ID }) id: string,
     @CurrentUser([ValidRoles.ADMIN, ValidRoles.SUPER_USER]) user: User,
@@ -71,7 +83,10 @@ export class UsersResolver {
     return this.usersService.block(id, user);
   }
 
-  @ResolveField(() => Int, { name: 'itemCount' })
+  @ResolveField(() => Int, {
+    name: 'itemCount',
+    description: 'Number of items owned by the user (admin only).',
+  })
   async itemCount(
     @CurrentUser([ValidRoles.ADMIN]) adminUser: User,
     @Parent() user: User,
@@ -79,7 +94,11 @@ export class UsersResolver {
     return this.itemService.itemCountByUser(user);
   }
 
-  @ResolveField(() => [Item], { name: 'items' })
+  @ResolveField(() => [Item], {
+    name: 'items',
+    description:
+      'Items owned by the user, paginated and searchable (admin only).',
+  })
   async getItemsByUser(
     @CurrentUser([ValidRoles.ADMIN]) adminUser: User,
     @Parent() user: User,
@@ -90,7 +109,10 @@ export class UsersResolver {
   }
 
   //LIST
-  @ResolveField(() => Int, { name: 'listCount' })
+  @ResolveField(() => Int, {
+    name: 'listCount',
+    description: 'Number of lists owned by the user (admin only).',
+  })
   async listCount(
     @CurrentUser([ValidRoles.ADMIN]) adminUser: User,
     @Parent() user: User,
@@ -98,7 +120,11 @@ export class UsersResolver {
     return this.listsService.listCountByUser(user);
   }
 
-  @ResolveField(() => [List], { name: 'list' })
+  @ResolveField(() => [List], {
+    name: 'list',
+    description:
+      'Lists owned by the user, paginated and searchable (admin only).',
+  })
   async getListByUser(
     @CurrentUser([ValidRoles.ADMIN]) adminUser: User,
     @Parent() user: User,

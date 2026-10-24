@@ -11,17 +11,17 @@ import {
 } from 'typeorm';
 
 @Entity({ name: 'items' })
-@ObjectType()
+@ObjectType({ description: 'A catalog item owned by a user.' })
 export class Item {
   /**
    * The unique identifier of the item.
    */
   @PrimaryGeneratedColumn('uuid')
-  @Field(() => ID)
+  @Field(() => ID, { description: 'Unique identifier (UUID).' })
   id: string;
 
   @Column()
-  @Field(() => String)
+  @Field(() => String, { description: 'Item name.' })
   name: string;
 
   // @Column()
@@ -31,15 +31,18 @@ export class Item {
   @Column({ nullable: true })
   @Field(() => String, {
     nullable: true,
+    description: 'Unit the quantity is measured in (e.g. kg, lb, box).',
   })
   quantityUnits?: string; // e.g. 'kg', 'litre', 'each'
 
   @ManyToOne(() => User, (user) => user.items, { nullable: false, lazy: true })
   @Index('userId-index')
-  @Field(() => User)
+  @Field(() => User, { description: 'User who owns the item.' })
   user: User;
 
   @OneToMany(() => ListItem, (listItem) => listItem.item, { lazy: true })
-  @Field(() => [ListItem])
+  @Field(() => [ListItem], {
+    description: 'List entries that reference this item.',
+  })
   listItem: ListItem[];
 }

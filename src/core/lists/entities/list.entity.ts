@@ -11,20 +11,20 @@ import {
 } from 'typeorm';
 
 @Entity({ name: 'lists' })
-@ObjectType()
+@ObjectType({ description: 'A shopping list owned by a user.' })
 export class List {
   @PrimaryGeneratedColumn('uuid')
-  @Field(() => ID)
+  @Field(() => ID, { description: 'Unique identifier (UUID).' })
   id: string;
 
   @Column()
-  @Field(() => String)
+  @Field(() => String, { description: 'List name.' })
   name: string;
 
   //Relacion, index ('userId-list-index')
   @ManyToOne(() => User, (user) => user.lists, { nullable: false, lazy: true })
   @Index('userId-list-index')
-  @Field(() => User)
+  @Field(() => User, { description: 'User who owns the list.' })
   user: User;
 
   //Relacion ListItems

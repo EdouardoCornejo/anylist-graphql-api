@@ -40,11 +40,18 @@ import { SeedModule } from './core/seed/seed.module';
     GraphQLModule.forRootAsync({
       driver: ApolloDriver,
       imports: [AuthModule],
-      inject: [JwtService],
-      useFactory: async (jwtService: JwtService) => ({
+      inject: [JwtService, ConfigService],
+      useFactory: async (
+        jwtService: JwtService,
+        configService: ConfigService,
+      ) => ({
         playground: false,
         autoSchemaFile: join(process.cwd(), 'src/schema.gql'),
-        plugins: [ApolloServerPluginLandingPageLocalDefault()],
+        // Apollo Sandbox is a development tool: only served outside production.
+        plugins:
+          configService.get<string>('STATE') === 'prod'
+            ? []
+            : [ApolloServerPluginLandingPageLocalDefault()],
         context({ req }) {
           // const token = req.headers.authorization?.replace('Bearer ', '') || '';
           // if (!token) throw new Error('No token found');

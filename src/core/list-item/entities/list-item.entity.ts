@@ -4,26 +4,30 @@ import { List } from 'src/core/lists/entities/list.entity';
 import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity('listItems')
-@ObjectType()
+@ObjectType({
+  description: 'An item placed in a list, with its quantity and status.',
+})
 export class ListItem {
   @PrimaryGeneratedColumn('uuid')
-  @Field(() => ID)
+  @Field(() => ID, { description: 'Unique identifier (UUID).' })
   id: string;
 
   @Column({ type: 'numeric' })
-  @Field(() => Number)
+  @Field(() => Number, { description: 'Quantity of the item to buy.' })
   quantity: number;
 
   @Column({ type: 'boolean' })
-  @Field(() => Boolean)
+  @Field(() => Boolean, {
+    description: 'Whether the item has already been picked up.',
+  })
   completed: boolean;
 
   //Relaciones
   @ManyToOne(() => List, (list) => list.listItem, { lazy: true })
-  @Field(() => List)
+  @Field(() => List, { description: 'List the entry belongs to.' })
   list: List;
 
   @ManyToOne(() => Item, (item) => item.listItem, { lazy: true })
-  @Field(() => Item)
+  @Field(() => Item, { description: 'Catalog item of the entry.' })
   item: Item;
 }
