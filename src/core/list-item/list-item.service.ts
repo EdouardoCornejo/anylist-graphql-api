@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { QueryFailedError, Repository } from 'typeorm';
 
 import { List } from './../lists/entities/list.entity';
 import { ListItem } from './entities/list-item.entity';
@@ -25,7 +25,9 @@ export class ListItemService {
       list: { id: listId },
     });
 
-    await this.listItemsRepository.save(newListItem);
+    await this.listItemsRepository
+      .save(newListItem)
+      .catch(this.handleMissingRelation);
 
     return this.findOne(newListItem.id);
   }
@@ -85,9 +87,21 @@ export class ListItemService {
         ...(itemId && { item: { id: itemId } }),
       })
       .where('id = :id', { id })
-      .execute();
+      .execute()
+      .catch(this.handleMissingRelation);
 
     return this.findOne(id);
+  }
+
+  private handleMissingRelation(error: unknown): never {
+    const foreignKeyViolation = '23503';
+    if (
+      error instanceof QueryFailedError &&
+      error.driverError?.code === foreignKeyViolation
+    ) {
+      throw new NotFoundException('List or item not found');
+    }
+    throw error;
   }
 
   remove(id: number) {

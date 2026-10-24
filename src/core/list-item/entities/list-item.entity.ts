@@ -23,11 +23,17 @@ export class ListItem {
   completed: boolean;
 
   //Relaciones
-  @ManyToOne(() => List, (list) => list.listItem, { lazy: true })
+  @ManyToOne(() => List, (list) => list.listItem, {
+    lazy: true,
+    onDelete: 'CASCADE',
+  })
   @Field(() => List, { description: 'List the entry belongs to.' })
   list: List;
 
-  @ManyToOne(() => Item, (item) => item.listItem, { lazy: true })
+  @ManyToOne(() => Item, (item) => item.listItem, {
+    lazy: true,
+    onDelete: 'CASCADE',
+  })
   @Field(() => Item, { description: 'Catalog item of the entry.' })
   item: Item;
 }

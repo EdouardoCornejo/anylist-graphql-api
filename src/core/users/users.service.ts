@@ -3,6 +3,7 @@ import {
   Injectable,
   InternalServerErrorException,
   Logger,
+  NotFoundException,
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -66,7 +67,7 @@ export class UsersService {
       .setParameter('roles', roles);
 
     if (search) {
-      queryBuilder.andWhere('LOWER(fullName) like :name', {
+      queryBuilder.andWhere('LOWER("fullName") like :name', {
         name: `%${search.toLowerCase()}%`,
       });
     }
@@ -79,14 +80,10 @@ export class UsersService {
   }
 
   async findOneByEmail(email: string): Promise<User> {
-    try {
-      return await this.usersRepository.findOneByOrFail({ email });
-    } catch (error) {
-      this.handleDbError({
-        code: 'error-001',
-        detail: `${email} not found`,
-      });
-    }
+    const user = await this.usersRepository.findOneBy({ email });
+    if (!user) throw new NotFoundException(`User ${email} not found`);
+
+    return user;
   }
 
   async update(
@@ -94,15 +91,16 @@ export class UsersService {
     updateUserInput: UpdateUserInput,
     updatedBy: User,
   ): Promise<User> {
+    const user = await this.usersRepository.preload({
+      ...updateUserInput,
+      id,
+    });
+    if (!user) throw new NotFoundException(`User with id ${id} not found`);
+
+    user.lastUpdateBy = updatedBy;
+
     try {
-      const user = await this.usersRepository.preload({
-        ...updateUserInput,
-        id,
-      });
-
-      user.lastUpdateBy = updatedBy;
-
-      return this.usersRepository.save(user);
+      return await this.usersRepository.save(user);
     } catch (error) {
       this.handleDbError(error);
     }
@@ -121,22 +119,14 @@ export class UsersService {
       throw new BadRequestException(error.detail.replace('Key ', ''));
     }
 
-    if (error.code === 'error-001') {
-      throw new BadRequestException(error.detail.replace('Key ', ''));
-    }
-
     this.logger.error(error);
     throw new InternalServerErrorException('Please contact the administrator');
   }
 
   async findOneById(id: string): Promise<User> {
-    try {
-      return await this.usersRepository.findOneByOrFail({ id });
-    } catch (error) {
-      this.handleDbError({
-        code: 'error-001',
-        detail: `${id} not found`,
-      });
-    }
+    const user = await this.usersRepository.findOneBy({ id });
+    if (!user) throw new NotFoundException(`User with id ${id} not found`);
+
+    return user;
   }
 }

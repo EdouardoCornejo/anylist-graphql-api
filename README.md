@@ -210,20 +210,20 @@ query {
 
 ## Cómo funciona
 
-La aplicación se compone en `src/app.module.ts`, que configura `TypeOrmModule` (PostgreSQL, `autoLoadEntities`, `synchronize`) y `GraphQLModule` con `ApolloDriver` en modo _code-first_ (`autoSchemaFile: src/schema.gql`, regenerado al arrancar con las descripciones de los decoradores) y el plugin `ApolloServerPluginLandingPageLocalDefault` (Apollo Sandbox) cuando `STATE` no es `prod`. `src/main.ts` usa un `CustomLoggerService`, habilita CORS, registra un `ValidationPipe` global (`whitelist`, `forbidNonWhitelisted`, `transform`) y escucha en el puerto `4000`.
+La aplicación se compone en `src/app.module.ts`, que configura `TypeOrmModule` (PostgreSQL, `autoLoadEntities`, `synchronize`) y `GraphQLModule` con `ApolloDriver` en modo _code-first_ (`autoSchemaFile: src/schema.gql`, regenerado al arrancar con las descripciones de los decoradores) y el plugin `ApolloServerPluginLandingPageLocalDefault` (Apollo Sandbox) cuando `STATE` no es `prod`; su `formatError` asigna el código `NOT_FOUND` a los errores 404 (Nest solo traduce 400, 401 y 403 a códigos GraphQL). `src/main.ts` usa un `CustomLoggerService`, habilita CORS, registra un `ValidationPipe` global (`whitelist`, `transform`) **antes** de `app.listen()` (si se registra después, los resolvers GraphQL no lo aplican) y escucha en el puerto `4000`. No usa `forbidNonWhitelisted`: los resolvers combinan varias clases `@Args()` (paginación + búsqueda) que reciben todos los argumentos, y el propio esquema GraphQL ya rechaza argumentos desconocidos.
 
 ### 1. `auth`
 
 - `AuthResolver` expone `signUp`, `login` y `revalidateToken`.
-- `AuthService` crea el usuario a través de `UsersService`, compara contraseñas con `bcrypt.compare` y firma el token con `JwtService` (payload `{ id }`).
-- `JwtStrategy` (Passport) extrae el Bearer token, lo verifica con `JWT_SECRET` y llama a `AuthService.validateUser`, que rechaza usuarios inactivos.
+- `AuthService` crea el usuario a través de `UsersService`, compara contraseñas con `bcrypt.compare` y firma el token con `JwtService` (payload `{ id }`). `login` responde `Invalid credentials` (`UNAUTHENTICATED`) tanto si el email no existe como si la contraseña es incorrecta, y `User is inactive` si el usuario está bloqueado.
+- `JwtStrategy` (Passport) extrae el Bearer token, lo verifica con `JWT_SECRET` y llama a `AuthService.validateUser`, que rechaza usuarios inactivos o inexistentes (`Token not valid`, p. ej. tras volver a ejecutar el seed).
 - `JwtAuthGuard` extiende `AuthGuard('jwt')` y sobrescribe `getRequest` para obtener la request desde `GqlExecutionContext`.
 - `@CurrentUser(roles?)` devuelve el usuario de la request y, si se le pasan roles, lanza `ForbiddenException` cuando el usuario no tiene ninguno de ellos.
 
 ### 2. `users`
 
 - Entidad `User`: `fullName`, `email` único, `password` (no expuesto en GraphQL), `roles` (array de texto, por defecto `['user']`), `isActive` y la auto-relación `lastUpdateBy`.
-- `UsersService.findAll` filtra por roles con `ARRAY[roles] && ARRAY[:...roles]`; `update` y `block` asignan `lastUpdateBy`; los errores de clave duplicada (`23505`) se traducen a `BadRequestException`.
+- `UsersService.findAll` filtra por roles con `ARRAY[roles] && ARRAY[:...roles]`; `update` y `block` asignan `lastUpdateBy`; los errores de clave duplicada (`23505`) se traducen a `BadRequestException` y un `id` inexistente a `NotFoundException`.
 - `UsersResolver` añade campos resueltos (`items`, `itemCount`, `list`, `listCount`) restringidos a administradores.
 
 ### 3. `items`
@@ -233,9 +233,9 @@ La aplicación se compone en `src/app.module.ts`, que configura `TypeOrmModule` 
 
 ### 4. `lists` y `list-item`
 
-- Entidad `List`: `name` y relación con `User`; entidad `ListItem` (tabla `listItems`): `quantity`, `completed` y relaciones con `List` e `Item`.
+- Entidad `List`: `name` y relación con `User`; entidad `ListItem` (tabla `listItems`): `quantity`, `completed` y relaciones con `List` e `Item` con `onDelete: CASCADE` (borrar una lista o un item elimina sus elementos de lista).
 - `ListsResolver` resuelve `items` (paginado y con búsqueda por nombre del item mediante `innerJoin`) y `totalItems` a través de `ListItemService`.
-- `ListItemService.create` recibe `listId` e `itemId` y crea la relación; `update` usa un `UpdateQueryBuilder` con un único `set()` que solo incluye los campos enviados (`UpdateListItemInput` no hereda los valores por defecto de `CreateListItemInput`) y se expone como la mutation `updateListItem`.
+- `ListItemService.create` recibe `listId` e `itemId` y crea la relación (si alguno no existe responde `List or item not found`); `update` usa un `UpdateQueryBuilder` con un único `set()` que solo incluye los campos enviados (`UpdateListItemInput` no hereda los valores por defecto de `CreateListItemInput`) y se expone como la mutation `updateListItem`.
 
 ### 5. `seed`
 

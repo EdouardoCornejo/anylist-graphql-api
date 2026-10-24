@@ -3,7 +3,7 @@ export const SEED_USERS = [
     fullName: 'Eduardo Cornejo',
     email: 'eduardo@google.com',
     password: 'admin123456',
-    roles: ['admin', 'superUser', 'user'],
+    roles: ['admin', 'super_user', 'user'],
     isActive: true,
   },
   {

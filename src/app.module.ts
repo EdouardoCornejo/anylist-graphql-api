@@ -6,6 +6,7 @@ import { GraphQLModule } from '@nestjs/graphql';
 import { JwtService } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ApolloServerPluginLandingPageLocalDefault } from 'apollo-server-core';
+import { GraphQLFormattedError } from 'graphql';
 import { join } from 'path';
 import { EnvConfig } from 'src/common/config/env.config';
 import { JoiValidationSchema } from 'src/common/config/joi.schema-validation';
@@ -52,6 +53,19 @@ import { SeedModule } from './core/seed/seed.module';
           configService.get<string>('STATE') === 'prod'
             ? []
             : [ApolloServerPluginLandingPageLocalDefault()],
+        // Nest only maps 400/401/403 to GraphQL codes, so a 404 would
+        // otherwise surface as INTERNAL_SERVER_ERROR.
+        formatError: (formattedError: GraphQLFormattedError) => {
+          const originalError = formattedError.extensions?.originalError as
+            | { statusCode?: number }
+            | undefined;
+          if (originalError?.statusCode !== 404) return formattedError;
+
+          return {
+            ...formattedError,
+            extensions: { ...formattedError.extensions, code: 'NOT_FOUND' },
+          };
+        },
         context({ req }) {
           // const token = req.headers.authorization?.replace('Bearer ', '') || '';
           // if (!token) throw new Error('No token found');

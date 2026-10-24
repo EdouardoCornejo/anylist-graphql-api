@@ -12,14 +12,16 @@ async function bootstrap() {
   app.enableCors();
   Logger.debug('Starting the application...');
   Logger.debug(`Starting in port ${port}`);
-  await app.listen(4000);
-
+  // Global pipes must be registered before listen() or GraphQL resolvers skip them.
+  // No forbidNonWhitelisted: resolvers combine several @Args() classes that each
+  // receive every argument, and the GraphQL schema already rejects unknown ones.
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
-      forbidNonWhitelisted: true,
       transform: true,
     }),
   );
+
+  await app.listen(port);
 }
 bootstrap();

@@ -1,8 +1,4 @@
-import {
-  BadGatewayException,
-  Injectable,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { LoginInput, SignUpInput } from 'src/core/auth/dto/input';
@@ -22,7 +18,11 @@ export class AuthService {
   }
 
   async validateUser(id: string): Promise<User> {
-    const user = await this.usersService.findOneById(id);
+    const user = await this.usersService.findOneById(id).catch(() => null);
+    if (!user) {
+      throw new UnauthorizedException('Token not valid');
+    }
+
     if (!user.isActive) {
       throw new UnauthorizedException('User is inactive');
     }
@@ -45,11 +45,17 @@ export class AuthService {
 
   async login(loginInput: LoginInput): Promise<AuthResponse> {
     const { email, password } = loginInput;
-    const user = await this.usersService.findOneByEmail(email);
+    // Same error for unknown email and wrong password, so emails can't be probed.
+    const user = await this.usersService
+      .findOneByEmail(email)
+      .catch(() => null);
 
-    const validPassword = await bcrypt.compare(password, user.password);
-    if (!validPassword) {
-      throw new BadGatewayException('Invalid credentials');
+    if (!user || !(await bcrypt.compare(password, user.password))) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    if (!user.isActive) {
+      throw new UnauthorizedException('User is inactive');
     }
 
     const token = this.getJwtToken(user.id);
