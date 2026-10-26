@@ -182,8 +182,8 @@ Todas las operaciones salvo `signUp`, `login` y `executeSeed` requieren la cabec
 | `createList`     | Mutation | Crea una lista                                                                                                          |
 | `updateList`     | Mutation | Renombra una lista                                                                                                      |
 | `removeList`     | Mutation | Elimina una lista                                                                                                       |
-| `listItem`       | Query    | Un elemento de lista por `id`                                                                                           |
-| `createListItem` | Mutation | Añade un item a una lista (`listId`, `itemId`, `quantity`, `completed`)                                                 |
+| `listItem`       | Query    | Un elemento de una lista propia por `id`                                                                                |
+| `createListItem` | Mutation | Añade un item propio a una lista propia (`listId`, `itemId`, `quantity`, `completed`)                                   |
 | `updateListItem` | Mutation | Actualiza un elemento de lista por `id`; solo cambian los campos enviados (`quantity`, `completed`, `listId`, `itemId`) |
 
 ### Ejemplo
@@ -235,7 +235,7 @@ La aplicación se compone en `src/app.module.ts`, que configura `TypeOrmModule` 
 
 - Entidad `List`: `name` y relación con `User`; entidad `ListItem` (tabla `listItems`): `quantity`, `completed` y relaciones con `List` e `Item` con `onDelete: CASCADE` (borrar una lista o un item elimina sus elementos de lista).
 - `ListsResolver` resuelve `items` (paginado y con búsqueda por nombre del item mediante `innerJoin`) y `totalItems` a través de `ListItemService`.
-- `ListItemService.create` recibe `listId` e `itemId` y crea la relación (si alguno no existe responde `List or item not found`); `update` usa un `UpdateQueryBuilder` con un único `set()` que solo incluye los campos enviados (`UpdateListItemInput` no hereda los valores por defecto de `CreateListItemInput`) y se expone como la mutation `updateListItem`.
+- `ListItemService` comprueba que la lista y el item pertenecen al usuario autenticado: `create` verifica `listId` e `itemId`, `update` verifica el elemento de lista y, si se envían, el nuevo `listId`/`itemId`, y `listItem` solo devuelve elementos de listas propias. Las listas, items o elementos de otro usuario responden el mismo `NOT_FOUND` que un `id` inexistente (`List or item not found` / `List item with id … not found`), para no confirmar que existen; `update` usa un `UpdateQueryBuilder` con un único `set()` que solo incluye los campos enviados (`UpdateListItemInput` no hereda los valores por defecto de `CreateListItemInput`) y se expone como la mutation `updateListItem`.
 
 ### 5. `seed`
 

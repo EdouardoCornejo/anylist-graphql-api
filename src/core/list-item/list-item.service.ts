@@ -1,7 +1,9 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { QueryFailedError, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 
+import { Item } from 'src/core/items/entities/item.entity';
+import { User } from 'src/core/users/entities/user.entity';
 import { List } from './../lists/entities/list.entity';
 import { ListItem } from './entities/list-item.entity';
 
@@ -14,10 +16,20 @@ export class ListItemService {
   constructor(
     @InjectRepository(ListItem)
     private readonly listItemsRepository: Repository<ListItem>,
+
+    @InjectRepository(List)
+    private readonly listsRepository: Repository<List>,
+
+    @InjectRepository(Item)
+    private readonly itemsRepository: Repository<Item>,
   ) {}
 
-  async create(createListItemInput: CreateListItemInput): Promise<ListItem> {
+  async create(
+    createListItemInput: CreateListItemInput,
+    user: User,
+  ): Promise<ListItem> {
     const { itemId, listId, ...rest } = createListItemInput;
+    await this.assertOwnedRelations({ listId, itemId }, user);
 
     const newListItem = this.listItemsRepository.create({
       ...rest,
@@ -25,11 +37,9 @@ export class ListItemService {
       list: { id: listId },
     });
 
-    await this.listItemsRepository
-      .save(newListItem)
-      .catch(this.handleMissingRelation);
+    await this.listItemsRepository.save(newListItem);
 
-    return this.findOne(newListItem.id);
+    return this.findOne(newListItem.id, user);
   }
 
   async findAll(
@@ -62,8 +72,11 @@ export class ListItemService {
     });
   }
 
-  async findOne(id: string): Promise<ListItem> {
-    const listItem = await this.listItemsRepository.findOneBy({ id });
+  async findOne(id: string, user: User): Promise<ListItem> {
+    const listItem = await this.listItemsRepository.findOneBy({
+      id,
+      list: { user: { id: user.id } },
+    });
 
     if (!listItem)
       throw new NotFoundException(`List item with id ${id} not found`);
@@ -74,8 +87,11 @@ export class ListItemService {
   async update(
     id: string,
     updateListItemInput: UpdateListItemInput,
+    user: User,
   ): Promise<ListItem> {
     const { listId, itemId, ...rest } = updateListItemInput;
+    await this.findOne(id, user);
+    await this.assertOwnedRelations({ listId, itemId }, user);
 
     // A single set() call: each set() replaces the previous values.
     await this.listItemsRepository
@@ -87,21 +103,26 @@ export class ListItemService {
         ...(itemId && { item: { id: itemId } }),
       })
       .where('id = :id', { id })
-      .execute()
-      .catch(this.handleMissingRelation);
+      .execute();
 
-    return this.findOne(id);
+    return this.findOne(id, user);
   }
 
-  private handleMissingRelation(error: unknown): never {
-    const foreignKeyViolation = '23503';
-    if (
-      error instanceof QueryFailedError &&
-      error.driverError?.code === foreignKeyViolation
-    ) {
+  // Lists and items of other users answer the same "not found" as missing
+  // ids, so a caller can't confirm that someone else's id exists.
+  private async assertOwnedRelations(
+    { listId, itemId }: { listId?: string; itemId?: string },
+    user: User,
+  ): Promise<void> {
+    const owner = { user: { id: user.id } };
+    const [listOwned, itemOwned] = await Promise.all([
+      !listId || this.listsRepository.existsBy({ id: listId, ...owner }),
+      !itemId || this.itemsRepository.existsBy({ id: itemId, ...owner }),
+    ]);
+
+    if (!listOwned || !itemOwned) {
       throw new NotFoundException('List or item not found');
     }
-    throw error;
   }
 
   remove(id: number) {

@@ -73,7 +73,7 @@ export class SeedService {
       },
       {},
     );
-    await this.loadListItems(list, items);
+    await this.loadListItems(list, items, user);
     return true;
   }
 
@@ -132,14 +132,21 @@ export class SeedService {
     return lists[0];
   }
 
-  async loadListItems(list: List, items: Array<Item>): Promise<void> {
+  async loadListItems(
+    list: List,
+    items: Array<Item>,
+    user: User,
+  ): Promise<void> {
     for (const item of items) {
-      this.listItemService.create({
-        quantity: Math.round(Math.random() * 10),
-        completed: Boolean(Math.round(Math.random() * 1)),
-        listId: list.id,
-        itemId: item.id,
-      });
+      await this.listItemService.create(
+        {
+          quantity: Math.round(Math.random() * 10),
+          completed: Boolean(Math.round(Math.random() * 1)),
+          listId: list.id,
+          itemId: item.id,
+        },
+        user,
+      );
     }
   }
 }

@@ -177,7 +177,7 @@ type Query {
   """Get one of the authenticated user's lists by id."""
   list(id: ID!): List!
 
-  """Get a list entry by id."""
+  """Get an entry of one of the authenticated user's lists by id."""
   listItem(id: String!): ListItem!
 }
 
@@ -219,10 +219,12 @@ type Mutation {
   """Delete one of the authenticated user's lists."""
   removeList(id: ID!): List!
 
-  """Add an item to a list."""
+  """Add one of the authenticated user's items to one of their lists."""
   createListItem(createListItemInput: CreateListItemInput!): ListItem!
 
-  """Update a list entry; only the fields sent are changed."""
+  """
+  Update an entry of one of the authenticated user's lists; only the fields sent change.
+  """
   updateListItem(updateListItemInput: UpdateListItemInput!): ListItem!
 
   """Wipe the database and load the seed data (disabled when STATE=prod)."""
@@ -315,10 +317,10 @@ input CreateListItemInput {
   """Whether the item is already picked up; defaults to false."""
   completed: Boolean = false
 
-  """Id of the target list."""
+  """Id of the target list; must belong to the authenticated user."""
   listId: ID!
 
-  """Id of the item to add."""
+  """Id of the item to add; must belong to the authenticated user."""
   itemId: ID!
 }
 
@@ -330,10 +332,10 @@ input UpdateListItemInput {
   """New completion state."""
   completed: Boolean
 
-  """Move the entry to another list."""
+  """Move the entry to another list of the authenticated user."""
   listId: ID
 
-  """Replace the catalog item of the entry."""
+  """Replace the item with another one of the authenticated user."""
   itemId: ID
 
   """Id of the list entry to update."""

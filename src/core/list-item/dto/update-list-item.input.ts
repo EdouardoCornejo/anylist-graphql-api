@@ -26,7 +26,7 @@ export class UpdateListItemInput {
 
   @Field(() => ID, {
     nullable: true,
-    description: 'Move the entry to another list.',
+    description: 'Move the entry to another list of the authenticated user.',
   })
   @IsUUID()
   @IsOptional()
@@ -34,7 +34,7 @@ export class UpdateListItemInput {
 
   @Field(() => ID, {
     nullable: true,
-    description: 'Replace the catalog item of the entry.',
+    description: 'Replace the item with another one of the authenticated user.',
   })
   @IsUUID()
   @IsOptional()

@@ -20,11 +20,17 @@ export class CreateListItemInput {
   @IsOptional()
   completed: boolean = false;
 
-  @Field(() => ID, { description: 'Id of the target list.' })
+  @Field(() => ID, {
+    description:
+      'Id of the target list; must belong to the authenticated user.',
+  })
   @IsUUID()
   listId: string;
 
-  @Field(() => ID, { description: 'Id of the item to add.' })
+  @Field(() => ID, {
+    description:
+      'Id of the item to add; must belong to the authenticated user.',
+  })
   @IsUUID()
   itemId: string;
 }
